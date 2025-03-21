@@ -1,112 +1,92 @@
-import numpy as np
-import matplotlib.pyplot as plt
 
 
-def getScore(redFlag,greenFlag):
-    if greenFlag==3:
-        print("Everything is under the recommended limit.")
-    elif redFlag==3:
-        print("You need to control your expenses and EMIs since the EMIs and expenses all crosses the max recommended limit.")
-    elif greenFlag>redFlag:
-        print("You are doing good but it can be further improved.")         
-    elif redFlag>greenFlag:
-        print("You need to improve and you don't have space for more EMIs and expenses.")
+def getTotalRetirementCorpus(totalExpenses):
+    # totalCorpus will be totalExpenses/3%
+    totalCorpus = (totalExpenses*100)/3
+    return totalCorpus
 
+def getManageRiskPortfolio(totalIncome,totalEMIs,restOfExpenses,totalExpenses):
 
-def analysis(totalIncome,totalEMIs,restOfExpenses):
-    ### All EMI limits should be less than or equal to 25% of your total income.
-    TotalEMIsLimit = totalIncome/4.0
+    netPersonalCashflow= totalIncome-(totalEMIs+restOfExpenses)
 
-    ### Total Fundamental costs(excludes EMIs) should be less than or equal to 25% of your total income.
-    TotalRemainingExpenseLimit = totalIncome/4.0
+    # 12 months of emergency fund
+    emergencyFund = totalEMIs*12+restOfExpenses*12
 
-    ### IdealCashflow should be atleast 50% of total income.
-    IdealCashflow = totalIncome/2.0
+    totalCorpus = getTotalRetirementCorpus(totalExpenses)
 
-    print("=======================Recommended Limits========================")
+    print("=======================Financial Plan==================================")
     print("Calculation is done for your Total Income=",totalIncome)
-    print("Maximum EMIs limit is: ",TotalEMIsLimit)
-    print("Maximum Remaining expense limit is: ",TotalRemainingExpenseLimit)
-    print("Total Fundamental Costs(EMIs+ Remaining expenses) limit is: ",TotalEMIsLimit+TotalRemainingExpenseLimit)
-    print("Ideal Cashflow should be geater than: ",IdealCashflow)
-    print("================================================================")
+    print("Net Personal Cashflow: ",netPersonalCashflow)
+    print("You have to save per month ", emergencyFund/12, "to build EmergencyFund for 12 months of: ",emergencyFund)
 
-    print("\n")
-    print("=======================Current==================================")
-    print("Calculation is done for your Total Income=",totalIncome)
-
-    ### Total net cashflow
-    TotalCashFlow = totalIncome-(totalEMIs+restOfExpenses)
-    print("Your total net Cashflow is: ",TotalCashFlow)
-
-    redFlag=0
-    greenFlag=0
-
-    if TotalCashFlow >= IdealCashflow:
-        greenFlag+=1
-    else:
-        redFlag+=1
-
-    if totalEMIs <= TotalEMIsLimit:
-        print("You still have a window to include more EMIs of: ",TotalEMIsLimit-totalEMIs)
-        greenFlag+=1
-    else:
-        print("You don't have a window to include more EMIs.")
-        print("You are exceeding the given EMIs limit by: ",totalEMIs-TotalEMIsLimit)
-        print("Try to reduce your EMIs by pre-paying the higher interest loan.")
-        redFlag+=1
+    print("You would require totalCorpus of: ",(totalEMIs+restOfExpenses)*5, "crore for atleast 4years of financial freedom.")
+    print("You would require totalCorpus of: ",totalCorpus/(10**7), "crore for atleast 25years of financial freedom.")
 
 
-    if restOfExpenses <= TotalRemainingExpenseLimit:
-        greenFlag+=1
-    else:
-        redFlag+=1
-
-    getScore(redFlag,greenFlag)
-    print("=================================================================")
-
-    showInPieChart(IdealCashflow,TotalEMIsLimit,TotalRemainingExpenseLimit,"Ideal Cashflow Distribution")
-    showInPieChart(TotalCashFlow,totalEMIs,restOfExpenses,"Yours Cashflow Distribution")
+    print("=======================================================================")
 
 
-def showInPieChart(cashflow,emis,expenses,title):
-    totalIncome = ["Net CashFlow","EMIs","RemaningExpenses"]
-    data = [cashflow,emis,expenses]
+def calculate_sip(totalCorpus, rateOfReturn, n):
+    """
+    Calculate the amount invested at regular intervals (P) for a given totalCorpus.
+    
+    Parameters:
+    totalCorpus: Future value of the investment
+    rateOfReturn: Expected annual rate of return
+    n (int): Total number of investments (number of years)
+    """
+    monthly_rate = rateOfReturn / 12
+    total_investments = n * 12
+    
+    # Calculate P using the rearranged formula
+    sip = (totalCorpus * monthly_rate) / ((1 + monthly_rate) * ((1 + monthly_rate) ** total_investments - 1))
+    
+    return sip
 
 
-    # Creating explode data
-    explode = (0.1, 0.1, 0.1)
-
-    # Creating color parameters
-    colors = ("orange", "cyan", "brown")
-
-    # Wedge properties
-    wp = {'linewidth': 1, 'edgecolor': "green"}
-
-    # Creating autocpt arguments
 
 
-    def func(pct, allvalues):
-        absolute = int(pct / 100.*np.sum(allvalues))
-        return "{:.1f}%\n({:d} g)".format(pct, absolute)
+#def showlineChart(cashflow,emis,expenses,title):
 
+def calculate_totalCorpus(P, r, n):
+    """
+    Calculate the future value of a SIP investment.
 
-    # Creating plot
-    fig, ax = plt.subplots(figsize=(10, 7))
-    wedges, texts, autotexts = ax.pie(data,autopct=lambda pct: func(pct, data),explode=explode,labels=totalIncome,shadow=True,colors=colors,startangle=90,wedgeprops=wp,textprops=dict(color="magenta"))
+    Parameters:
+    P : Amount invested at regular intervals (SIP amount)
+    r : Expected annual rate of return (as a decimal)
+    n : Total number of investments (number of years)
 
-    # Adding legend
-    ax.legend(wedges,totalIncome ,title="Labels",loc="center left",bbox_to_anchor=(1, 0, 0.5, 1))
+    """
+    # Convert annual rate to monthly and total investments
+    monthly_rate = r / 12
+    total_investments = n * 12
+    
+    # Calculate future value using the SIP formula
+    FV = P * (((1 + monthly_rate) ** total_investments - 1) / monthly_rate) * (1 + monthly_rate)
+    
+    return FV
 
-    plt.setp(autotexts, size=8, weight="bold")
-    ax.set_title(title)
-
-
-    plt.show()
 
 
 def main():
-    analysis(yourTotalIncome,yourEMIs,yourRestOfExpenses)
+    # Example usage
+    totalCorpus = 5000000  # Future Value
+    annual_rate = .12  # 12% annual return
+    investment_years = 4  # Duration in years
+
+    sip_amount = calculate_sip(totalCorpus, annual_rate, investment_years)
+    print(f"Amount to be invested monthly: {sip_amount:.2f}")
+
+    # Example usage
+    sip_amount = 100000  # Amount invested monthly
+    annual_rate = 0.12  # 12% annual return
+    investment_years = 5  # Duration in years
+
+    future_value = calculate_totalCorpus(sip_amount, annual_rate, investment_years)
+    print(f"Future Value of SIP investment: {future_value/10**7:.2f}","cr")
+    #getManageRiskPortfolio(yourTotalIncome,yourEMIs,yourRestOfExpenses,yourTotalAnnualExpenses)
+    
 
 
 if __name__ == '__main__':
